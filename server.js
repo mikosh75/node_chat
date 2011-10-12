@@ -1,6 +1,46 @@
 HOST = null; // localhost
 PORT = 8001;
 
+// utility functions
+
+util = {
+  urlRE: /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g, 
+
+  //  html sanitizer 
+  toStaticHTML: function(inputHtml) {
+    inputHtml = inputHtml.toString();
+    return inputHtml.replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+  }, 
+
+  //pads n with zeros on the left,
+  //digits is minimum length of output
+  //zeroPad(3, 5); returns "005"
+  //zeroPad(2, 500); returns "500"
+  zeroPad: function (digits, n) {
+    n = n.toString();
+    while (n.length < digits) 
+      n = '0' + n;
+    return n;
+  },
+
+  //it is almost 8 o'clock PM here
+  //timeString(new Date); returns "19:49"
+  timeString: function (date) {
+    var minutes = date.getMinutes().toString();
+    var hours = date.getHours().toString();
+    return this.zeroPad(2, hours) + ":" + this.zeroPad(2, minutes);
+  },
+
+  //does the argument only contain whitespace?
+  isBlank: function(text) {
+    var blank = /^\s*$/;
+    return (text.match(blank) !== null);
+  }
+};
+
+
 // when the daemon started
 var starttime = (new Date()).getTime();
 
@@ -32,7 +72,7 @@ var channel = new function () {
 
     switch (type) {
       case "msg":
-        sys.puts("<" + nick + "> " + text);
+        sys.puts(util.timeString(new Date()) + " <" + nick + "> " + text);
         break;
       case "join":
         sys.puts(nick + " join");
@@ -152,7 +192,7 @@ fu.get("/join", function (req, res) {
     return;
   }
 
-  //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
+  sys.puts("connection: " + nick + "@" + res.connection.remoteAddress + " with id: " + session.id);
 
   channel.appendMessage(session.nick, "join");
   res.simpleJSON(200, { id: session.id
